@@ -1,3 +1,6 @@
 {
-	"mac_address": "..."
+	"mac_address": "...",
+	"gmail": "...",
+	"gmail_password": "...",
+	"email_to_notify": "..."
 }
