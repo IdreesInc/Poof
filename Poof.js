@@ -1,6 +1,7 @@
 var fs = require("fs");
 var dash_button = require('node-dash-button');
 var nodemailer = require('nodemailer');
+var request = require('request');
 
 
 var config = JSON.parse(fs.readFileSync(__dirname + '/config.json', 'utf8'));
@@ -15,7 +16,7 @@ init();
  function init() {
  	dash.on("detected", function (){
  		log("Button pressed!");
- 		notify("Button pressed!");
+ 		notify();
  	});
 
  	transporter = nodemailer.createTransport({
@@ -28,24 +29,30 @@ init();
  		}
  	});
  	console.log("Poof activated @ " + getTime());
+ 	notify();
  }
 
 /**
- * Sends an email to the "email_to_notify" set in the config with the given message.
- * @param  {String} message The message to send
+ * Sends an email to the "email_to_notify" set in the config with the specified message and a random gif.
  */
- function notify(message) {
- 	sendEmail(config.email_to_notify, "🛎 " + getTime(), message);
+ function notify() {
+ 	request("http://api.giphy.com/v1/gifs/random?api_key=" + config.giphy_key + "&tag=" + config.giphy_tag, function (error, response, body) {
+ 		var gif = "";
+ 		if (!error && response.statusCode == 200) {
+ 			gif = "\n" + JSON.parse(body).data.url;
+ 		}
+ 		var subject = config.message_subject.replace("[TIME]", getTime()).replace("[time]", getTime());
+ 		sendEmail(config.email_to_notify, subject, config.message + gif);
+ 	});
  }
 
 /**
  * Sends an email with the given parameters.
- * @param  {String}  to      The email address of the person to send the email to
- * @param  {String}  subject The subject of the email
- * @param  {String}  message The body of the email in plain-text
- * @param  {Boolean} [mute]  Whether or not to mute the console output (Default is false)
+ * @param  {String}  to           The email address of the person to send the email to
+ * @param  {String}  subject      The subject of the email
+ * @param  {String}  message      The body of the email in plain-text
  */
- function sendEmail(to, subject, message, mute) {
+ function sendEmail(to, subject, message) {
  	var options = {
  		from: '"Poof" <' + config.gmail + '>',
  		to: to,
@@ -56,7 +63,7 @@ init();
  		if(error){
  			log("Error sending email:", error);
  			return;
- 		} else if ((mute !== undefined && !mute) || mute === undefined) {
+ 		} else {
  			log("Email sent to " + to + ": [" + subject + "] " + options.text);
  		}
  	});
