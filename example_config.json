@@ -6,5 +6,6 @@
 	"message_subject": "🛎 [TIME]",
 	"message": "Ding dong!",
 	"giphy_key": "dc6zaTOxFJmzC",
-	"giphy_tag": "hello"
+	"giphy_tag": "hello",
+	"cooldown": 60
 }

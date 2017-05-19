@@ -7,6 +7,7 @@ var request = require('request');
 var config = JSON.parse(fs.readFileSync(__dirname + '/config.json', 'utf8'));
 var transporter;
 var dash = dash_button(config.mac_address, null, null, 'udp');
+var timeLastPressed = Math.floor(new Date().getTime() / 1000);
 
 init();
 
@@ -15,8 +16,14 @@ init();
  */
  function init() {
  	dash.on("detected", function (){
- 		log("Button pressed!");
- 		notify();
+ 		var currentTime = Math.floor(new Date().getTime() / 1000);
+ 		log("Button pressed! Time since last press: " + (timeLastPressed - currentTime));
+ 		if (timeLastPressed === 0 || currentTime - timeLastPressed > config.cooldown) {
+ 			timeLastPressed = currentTime;
+ 			notify();
+ 		} else {
+ 			log("Cooldown period still active! Time remaining: " + (config.cooldown - (currentTime - timeLastPressed)));
+ 		}
  	});
 
  	transporter = nodemailer.createTransport({
