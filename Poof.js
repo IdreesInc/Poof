@@ -2,6 +2,7 @@ var fs = require("fs");
 var dash_button = require('node-dash-button');
 var nodemailer = require('nodemailer');
 var request = require('request');
+var intercept = require("intercept-stdout");
 
 
 var config = JSON.parse(fs.readFileSync(__dirname + '/config.json', 'utf8'));
@@ -15,14 +16,19 @@ init();
  * Initializes the program.
  */
  function init() {
+ 	var unhook_intercept = intercept(function(txt) {
+ 		var time = new Date().toLocaleString().split(", ")[1];
+ 		return "[" + time + "] (Poof)  " + txt;
+ 	});
+
  	dash.on("detected", function (){
  		var currentTime = Math.floor(new Date().getTime() / 1000);
- 		log("Button pressed! Time since last press: " + (timeLastPressed - currentTime));
+ 		console.log("Button pressed! Time since last press: " + (timeLastPressed - currentTime));
  		if (timeLastPressed === 0 || currentTime - timeLastPressed > config.cooldown) {
  			timeLastPressed = currentTime;
  			notify();
  		} else {
- 			log("Cooldown period still active! Time remaining: " + (config.cooldown - (currentTime - timeLastPressed)));
+ 			console.log("Cooldown period still active! Time remaining: " + (config.cooldown - (currentTime - timeLastPressed)));
  		}
  	});
 
@@ -35,8 +41,7 @@ init();
  			pass: config.gmail_password
  		}
  	});
- 	console.log("Poof activated @ " + getTime());
- 	notify();
+ 	console.log("Poof activated!");
  }
 
 /**
@@ -68,20 +73,12 @@ init();
  	};
  	transporter.sendMail(options, function(error, info) {
  		if(error){
- 			log("Error sending email:", error);
+ 			console.log("Error sending email:", error);
  			return;
  		} else {
- 			log("Email sent to " + to + ": [" + subject + "] " + options.text);
+ 			console.log("Email sent to " + to + ": [" + subject + "] " + options.text);
  		}
  	});
- }
-
-/**
- * Prints output to console along with timestamp.
- * @param  {String} output The text to output
- */
- function log(output) {
- 	console.log(getTime() + " " + output);
  }
 
 /**
